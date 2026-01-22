@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
@@ -31,6 +31,7 @@ export default function CustomerOrders() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completingOrder, setCompletingOrder] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || user.role !== 'customer') {
@@ -48,6 +49,23 @@ export default function CustomerOrders() {
     } catch (error) {
       console.error('Failed to load orders:', error);
       setLoading(false);
+    }
+  };
+
+  const completePayment = async (orderId: string) => {
+    if (!confirm('Complete this payment manually? (Test Mode Only)')) {
+      return;
+    }
+
+    setCompletingOrder(orderId);
+    try {
+      const response = await axios.post('/api/orders/complete', { orderId });
+      alert(response.data.message);
+      fetchOrders(); // Refresh the orders
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to complete payment');
+    } finally {
+      setCompletingOrder(null);
     }
   };
 
@@ -114,6 +132,14 @@ export default function CustomerOrders() {
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Sandbox Warning */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-yellow-800">
+            <strong>⚠️ Test Mode:</strong> If payment stays pending after 30 seconds, 
+            use the "Complete Payment" button below. Sandbox callbacks may not work reliably.
+          </p>
+        </div>
+
         {orders.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 text-lg">No orders yet</p>
@@ -180,6 +206,17 @@ export default function CustomerOrders() {
                     <p className="text-sm text-gray-600 mt-2">
                       M-Pesa Receipt: {order.mpesaReceiptNumber}
                     </p>
+                  )}
+                  
+                  {/* Manual completion button for pending orders */}
+                  {order.paymentStatus === 'pending' && (
+                    <button
+                      onClick={() => completePayment(order._id)}
+                      disabled={completingOrder === order._id}
+                      className="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {completingOrder === order._id ? 'Processing...' : 'Complete Payment (Test Mode)'}
+                    </button>
                   )}
                 </div>
               </div>

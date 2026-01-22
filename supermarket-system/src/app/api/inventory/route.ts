@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { verifyToken, getTokenFromCookie } from '../../../../lib/auth';
+import { InventoryModel, IInventory } from '../../../../models/Inventory';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const inventory = await db
-      .collection('inventory')
+      .collection(InventoryModel.collectionName)
       .aggregate([
         { $match: query },
         {
@@ -66,24 +67,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { branchId, productId, quantity } = body;
 
-    if (!branchId || !productId || quantity === undefined) {
-      return NextResponse.json(
-        { error: 'Branch ID, Product ID, and quantity are required' },
-        { status: 400 }
-      );
+    // Validate input using model
+    const inventoryData: Partial<IInventory> = {
+      branchId: new ObjectId(branchId),
+      productId: new ObjectId(productId),
+      quantity: parseInt(quantity),
+    };
+
+    const validation = InventoryModel.validate(inventoryData);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     const db = await getDatabase();
 
-    // Update inventory
-    const result = await db.collection('inventory').updateOne(
+    // Update inventory (increment quantity)
+    const result = await db.collection(InventoryModel.collectionName).updateOne(
       {
         branchId: new ObjectId(branchId),
         productId: new ObjectId(productId),
       },
       {
         $inc: { quantity: parseInt(quantity) },
-        $set: { lastRestocked: new Date() },
+        $set: { 
+          lastRestocked: new Date(),
+          updatedAt: new Date() 
+        },
       }
     );
 
@@ -91,7 +100,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Inventory not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    // Get updated inventory
+    const updated = await db.collection(InventoryModel.collectionName).findOne({
+      branchId: new ObjectId(branchId),
+      productId: new ObjectId(productId),
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      message: `Stock updated successfully. New quantity: ${updated?.quantity}`,
+      quantity: updated?.quantity 
+    });
   } catch (error) {
     console.error('Error updating inventory:', error);
     return NextResponse.json(
