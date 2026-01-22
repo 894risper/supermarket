@@ -41,9 +41,16 @@ export function getTokenFromCookie(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
   
   const cookies = cookieHeader.split(';').map(c => c.trim());
-  const tokenCookie = cookies.find(c => c.startsWith('token='));
   
-  if (!tokenCookie) return null;
+  // Look for 'auth_token' cookie (matches what login route sets)
+  const tokenCookie = cookies.find(c => c.startsWith('auth_token='));
+  
+  if (!tokenCookie) {
+    // Fallback: also check for 'token' cookie for backward compatibility
+    const fallbackCookie = cookies.find(c => c.startsWith('token='));
+    if (!fallbackCookie) return null;
+    return fallbackCookie.split('=')[1];
+  }
   
   return tokenCookie.split('=')[1];
 }

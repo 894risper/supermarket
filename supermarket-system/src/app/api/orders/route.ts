@@ -3,7 +3,8 @@ import { getDatabase } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { verifyToken, getTokenFromCookie } from '../../../../lib/auth';
 import { initiateSTKPush } from '../../../../lib/mpesa';
-import { Order,OrderItem } from '../../../../types';
+import { Order, OrderItem } from '../../../../types';
+
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
@@ -86,6 +87,8 @@ export async function POST(request: NextRequest) {
     const orderResult = await db.collection<Order>('orders').insertOne(order as Order);
     const orderId = orderResult.insertedId.toString();
 
+    console.log('📦 Order created:', orderId);
+
     // Initiate M-Pesa payment
     try {
       const mpesaResponse = await initiateSTKPush(
@@ -95,12 +98,15 @@ export async function POST(request: NextRequest) {
         'Supermarket Purchase'
       );
 
+      console.log('🎯 M-Pesa CheckoutRequestID:', mpesaResponse.CheckoutRequestID);
+
       // Update order with checkout request ID
       await db.collection('orders').updateOne(
         { _id: orderResult.insertedId },
         {
           $set: {
             mpesaTransactionId: mpesaResponse.CheckoutRequestID,
+            updatedAt: new Date(),
           },
         }
       );
@@ -112,10 +118,17 @@ export async function POST(request: NextRequest) {
         message: 'Please complete payment on your phone',
       });
     } catch (mpesaError: any) {
+      console.error('❌ M-Pesa initiation failed:', mpesaError);
+      
       // Update order status to failed
       await db.collection('orders').updateOne(
         { _id: orderResult.insertedId },
-        { $set: { paymentStatus: 'failed' } }
+        { 
+          $set: { 
+            paymentStatus: 'failed',
+            updatedAt: new Date() 
+          } 
+        }
       );
 
       return NextResponse.json(

@@ -1,34 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '../../../../../lib/mongodb';
-import { hashPassword,generateToken } from '../../../../../lib/auth';
-import { User } from '../../../../../types';
+import { hashPassword, generateToken } from '../../../../../lib/auth';
+import { UserModel, IUser } from '../../../../../models/User';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, password, phone } = body;
 
-    // Validation
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
-      );
-    }
+    // Prepare user data
+    const userData: Partial<IUser> = {
+      name,
+      email,
+      password,
+      role: 'customer',
+      phone: phone || '',
+    };
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
+    // Sanitize input
+    const sanitized = UserModel.sanitize(userData);
 
-    // Password validation
-    if (password.length < 6) {
+    // Validate input
+    const validation = UserModel.validate(sanitized);
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { error: validation.error },
         { status: 400 }
       );
     }
@@ -36,7 +32,10 @@ export async function POST(request: NextRequest) {
     const db = await getDatabase();
 
     // Check if user already exists
-    const existingUser = await db.collection<User>('users').findOne({ email });
+    const existingUser = await db
+      .collection(UserModel.collectionName)
+      .findOne({ email: sanitized.email });
+
     if (existingUser) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
@@ -45,23 +44,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(sanitized.password!);
 
     // Create user
-    const result = await db.collection<User>('users').insertOne({
-      name,
-      email,
+    const newUser: IUser = {
+      name: sanitized.name!,
+      email: sanitized.email!,
       password: hashedPassword,
       role: 'customer',
-      phone: phone || '',
+      phone: sanitized.phone || '',
       createdAt: new Date(),
-    });
+    };
+
+    const result = await db
+      .collection(UserModel.collectionName)
+      .insertOne(newUser);
 
     // Generate token
     const token = generateToken({
       id: result.insertedId.toString(),
-      email,
-      name,
+      email: newUser.email,
+      name: newUser.name,
       role: 'customer',
     });
 
@@ -69,10 +72,11 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json(
       {
         success: true,
+        message: 'Account created successfully',
         user: {
           id: result.insertedId.toString(),
-          name,
-          email,
+          name: newUser.name,
+          email: newUser.email,
           role: 'customer',
         },
       },

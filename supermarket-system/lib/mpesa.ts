@@ -69,6 +69,12 @@ export async function initiateSTKPush(
       TransactionDesc: transactionDesc,
     };
 
+    console.log('🚀 Initiating STK Push...');
+    console.log('📞 Phone:', formattedPhone);
+    console.log('💰 Amount:', Math.floor(amount));
+    console.log('🔗 Callback URL:', CALLBACK_URL);
+    console.log('📋 Account Reference:', accountReference);
+
     const response = await axios.post(
       `${BASE_URL}/mpesa/stkpush/v1/processrequest`,
       requestData,
@@ -80,9 +86,12 @@ export async function initiateSTKPush(
       }
     );
 
+    console.log('✅ M-Pesa Response:', JSON.stringify(response.data, null, 2));
+    console.log('🔑 CheckoutRequestID:', response.data.CheckoutRequestID);
+
     return response.data;
   } catch (error: any) {
-    console.error('STK Push error:', error.response?.data || error.message);
+    console.error('❌ STK Push error:', error.response?.data || error.message);
     throw new Error('Failed to initiate M-Pesa payment');
   }
 }
