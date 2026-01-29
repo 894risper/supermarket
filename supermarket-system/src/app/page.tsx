@@ -8,9 +8,6 @@ import {
   Store, 
   User, 
   MapPin, 
-  Users, 
-  Package, 
-  TrendingUp, 
   Zap, 
   Shield, 
   Clock, 
@@ -19,7 +16,7 @@ import {
 
 export default function Home() {
   const [videoLoaded, setVideoLoaded] = useState(false);
- 
+
   const features = [
     {
       icon: <Zap className="w-8 h-8" />,
@@ -46,13 +43,31 @@ export default function Home() {
       color: 'bg-pink-500'
     }
   ];
- 
+
   const branches = [
     { name: 'Nairobi HQ', location: 'Westlands', status: 'Open' },
     { name: 'Kisumu', location: 'Mega Plaza', status: 'Open' },
     { name: 'Mombasa', location: 'Nyali Centre', status: 'Open' },
     { name: 'Nakuru', location: 'Gilani\'s', status: 'Open' },
     { name: 'Eldoret', location: 'Zion Mall', status: 'Open' },
+  ];
+ 
+  const BRANDS = [
+    { 
+      name: 'Coca-Cola', 
+      url: 'https://logos-world.net/wp-content/uploads/2020/03/Coca-Cola-Logo.png',
+      width: 'w-32'
+    },
+    { 
+      name: 'Fanta', 
+      url: 'https://logos-world.net/wp-content/uploads/2020/05/Fanta-Logo.png',
+      width: 'w-24'
+    },
+    { 
+      name: 'Sprite', 
+      url: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Sprite_Logo.svg',
+      width: 'w-24'
+    }
   ];
 
   return (
@@ -76,7 +91,7 @@ export default function Home() {
             />
             {/* Fallback Image */}
             <img 
-              src="https://images.pexels.com/photos/4113625/pexels-photo-4113625.jpeg" 
+              src="https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg" 
               alt="Cheers" 
               className="h-full w-full object-cover"
             />
@@ -84,7 +99,8 @@ export default function Home() {
           {/* Overlay */}
           <div className="absolute inset-0 bg-black/60 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
         </div>
- 
+
+        {/* Transparent Header */}
         <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-6 md:px-12">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg border border-white/20">
@@ -96,13 +112,14 @@ export default function Home() {
           </div>
           <Link 
             href="/auth/login"
-            className="flex items-center gap-2 text-sm font-semibold hover:text-blue-300 transition-colors bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm"
+            className="flex items-center gap-2 text-sm font-semibold hover:text-blue-300 transition-colors bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-white/20"
           >
             <User size={18} />
             <span>Member Login</span>
           </Link>
         </header>
- 
+
+        {/* Hero Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
           <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md">
             <span className="relative flex h-2 w-2">
@@ -140,24 +157,25 @@ export default function Home() {
           </div>
         </div>
  
-        <div className="absolute bottom-0 w-full border-t border-white/10 bg-black/20 backdrop-blur-md py-6 overflow-hidden z-20">
-          <div className="flex justify-center flex-wrap gap-8 md:gap-16 opacity-70">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🥤</span>
-              <span className="font-bold tracking-widest text-sm md:text-xl">COKE</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🍊</span>
-              <span className="font-bold tracking-widest text-sm md:text-xl">FANTA</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">✨</span>
-              <span className="font-bold tracking-widest text-sm md:text-xl">SPRITE</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">⚡</span>
-              <span className="font-bold tracking-widest text-sm md:text-xl">RED BULL</span>
-            </div>
+        <div className="absolute bottom-0 w-full border-t border-white/10 bg-black/30 backdrop-blur-md py-6 overflow-hidden z-20">
+          <div className="flex justify-center items-center gap-12 md:gap-24 opacity-80">
+            {BRANDS.map((brand) => (
+              <div 
+                key={brand.name}
+                className="group relative flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:scale-110 cursor-default"
+              > 
+                <img 
+                  src={brand.url} 
+                  alt={brand.name} 
+                  className={`${brand.width} h-auto object-contain filter grayscale brightness-200 contrast-125 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-500 drop-shadow-lg`}
+                  onError={(e) => { 
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                /> 
+                <span className="hidden text-white font-bold tracking-widest text-lg">{brand.name.toUpperCase()}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -188,8 +206,8 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section> 
-
+      </section>
+ 
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
