@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { ArrowLeft, CheckCircle, XCircle, Clock, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Clock, MapPin, Calendar, ShoppingBag, Store } from 'lucide-react';
 
 interface Order {
   _id: string;
@@ -25,6 +25,14 @@ interface Order {
     location: string;
   };
 }
+ 
+const BrandIcon = ({ brand }: { brand: string }) => {
+  const b = brand.toLowerCase();
+  if (b.includes('coke') || b.includes('coca')) return <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">C</div>;
+  if (b.includes('fanta')) return <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">F</div>;
+  if (b.includes('sprite')) return <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">S</div>;
+  return <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs">{brand.charAt(0)}</div>;
+};
 
 export default function CustomerOrders() {
   const { user } = useAuth();
@@ -38,7 +46,7 @@ export default function CustomerOrders() {
       router.push('/auth/login');
       return;
     }
-    fetchOrders();
+    fetchOrders(); 
   }, [user, router]);
 
   const fetchOrders = async () => {
@@ -52,101 +60,89 @@ export default function CustomerOrders() {
     }
   };
 
-  const completePayment = async (orderId: string) => {
-    if (!confirm('Complete this payment manually? (Test Mode Only)')) {
-      return;
-    }
-
+  const completePayment = async (orderId: string) => { 
     setCompletingOrder(orderId);
     try {
-      const response = await axios.post('/api/orders/complete', { orderId });
-      alert(response.data.message);
-      fetchOrders(); // Refresh the orders
+      await axios.post('/api/orders/complete', { orderId });
+      fetchOrders(); // Refresh UI
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to complete payment');
+      alert('Failed to update status');
     } finally {
       setCompletingOrder(null);
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="text-green-500" size={24} />;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+            <CheckCircle size={14} /> Paid
+          </span>
+        );
       case 'failed':
-        return <XCircle className="text-red-500" size={24} />;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
+            <XCircle size={14} /> Failed
+          </span>
+        );
       default:
-        return <Clock className="text-yellow-500" size={24} />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Completed';
-      case 'failed':
-        return 'Failed';
-      default:
-        return 'Pending';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+            <Clock size={14} /> Pending
+          </span>
+        );
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading orders...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-500 font-medium">Loading history...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <button
-              onClick={() => router.push('/customer/shop')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Back to Shop</span>
-            </button>
-            <h1 className="ml-8 text-xl font-bold text-gray-900">My Orders</h1>
+    <div className="min-h-screen bg-gray-50 pb-12"> 
+      <nav className="bg-white shadow-sm border-b sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => router.push('/customer/shop')}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-xl font-bold text-gray-900">Order History</h1>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-1.5 rounded-lg text-white">
+                <Store size={18} />
+              </div>
+              <span className="font-bold text-gray-900 text-sm hidden sm:inline">SuperMart</span>
+            </div>
           </div>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Sandbox Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-yellow-800">
-            <strong>⚠️ Test Mode:</strong> If payment stays pending after 30 seconds, 
-            use the "Complete Payment" button below. Sandbox callbacks may not work reliably on localhost.
-          </p>
-        </div>
-
+        
         {orders.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <ShoppingBag className="mx-auto text-gray-300 mb-4" size={48} />
-            <p className="text-gray-600 text-lg">No orders yet</p>
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+              <ShoppingBag size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h2>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">Looks like you haven't made your first purchase. The drinks are waiting!</p>
             <button
               onClick={() => router.push('/customer/shop')}
-              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl"
             >
               Start Shopping
             </button>
@@ -154,70 +150,62 @@ export default function CustomerOrders() {
         ) : (
           <div className="space-y-6">
             {orders.map((order) => (
-              <div key={order._id} className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-                <div className="flex justify-between items-start mb-4">
+              <div key={order._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                
+                 
+                <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs font-mono text-gray-500">
-                      ID: {order._id.slice(-6).toUpperCase()}
-                    </p>
-                    <p className="text-sm text-gray-900 font-medium mt-1">
-                      {new Date(order.createdAt).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      📍 {order.branch.name}, {order.branch.location}
-                    </p>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="font-mono text-xs text-gray-500 uppercase tracking-wider">#{order._id.slice(-6)}</span>
+                      {getStatusBadge(order.paymentStatus)}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
+                      <span className="flex items-center gap-1"><Calendar size={12}/> {new Date(order.createdAt).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1"><Clock size={12}/> {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(order.paymentStatus)}
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${getStatusColor(order.paymentStatus)}`}>
-                      {getStatusText(order.paymentStatus)}
-                    </span>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 font-medium mb-0.5">Total Amount</p>
+                    <p className="text-xl font-extrabold text-gray-900">KES {order.totalAmount.toLocaleString()}</p>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-100 pt-4">
-                  <div className="space-y-3">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <div className="flex items-center gap-3"> 
-                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-                            <ShoppingBag size={18} />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{item.productName}</p>
-                            <p className="text-xs text-blue-600 font-semibold uppercase">{item.brand}</p>
-                            <p className="text-sm text-gray-500">
-                              {item.quantity} × KES {item.price}
-                            </p>
-                          </div>
+                
+                <div className="px-6 py-4 space-y-4">
+                  {order.items.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <BrandIcon brand={item.brand} />
+                        <div>
+                          <p className="font-bold text-gray-900 text-sm">{item.productName}</p>
+                          <p className="text-xs text-gray-500 font-medium">{item.quantity} x KES {item.price}</p>
                         </div>
-                        <p className="font-semibold text-gray-900">KES {item.subtotal.toLocaleString()}</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <span className="font-semibold text-gray-900 text-sm">KES {item.subtotal.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div> 
 
-                <div className="border-t border-gray-100 mt-4 pt-4 bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-700">Total Amount</span>
-                    <span className="font-bold text-xl text-gray-900">
-                      KES {order.totalAmount.toLocaleString()}
-                    </span>
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin size={16} className="text-blue-600" />
+                    <span className="font-medium">Pickup: <span className="text-gray-900">{order.branch.name}</span></span>
                   </div>
-                  {order.mpesaReceiptNumber && (
-                    <p className="text-xs text-green-600 mt-1 font-mono">
-                      Ref: {order.mpesaReceiptNumber}
-                    </p>
-                  )} 
-
+ 
                   {order.paymentStatus === 'pending' && (
                     <button
                       onClick={() => completePayment(order._id)}
                       disabled={completingOrder === order._id}
-                      className="mt-3 w-full bg-white border border-green-600 text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                     >
-                      {completingOrder === order._id ? 'Processing...' : 'Complete Payment'}
+                      {completingOrder === order._id ? 'Verifying...' : 'Confirm payment'}
                     </button>
+                  )}
+                  
+                  {order.mpesaReceiptNumber && (
+                    <span className="text-xs font-mono text-gray-400 bg-white px-2 py-1 rounded border border-gray-200">
+                      Ref: {order.mpesaReceiptNumber}
+                    </span>
                   )}
                 </div>
               </div>
