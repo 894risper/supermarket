@@ -67,10 +67,10 @@ async function seed() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB");
  
-    console.log("🧹 Clearing old products...");
+    console.log("🧹 Clearing old products and inventory...");
     await mongoose.connection.db?.collection('products').deleteMany({});
-
-    // 2. DOWNLOAD IMAGES
+    await mongoose.connection.db?.collection('inventory').deleteMany({});
+ 
     console.log("⏳ Downloading images... (This may take 1 minute)");
     const images = {
       // Sprite
@@ -111,7 +111,7 @@ async function seed() {
       coke_2L: await fetchImage(IMAGE_URLS.coke_2L, "P8z/Pw"),
     };
  
-    const products = [
+    const productData = [
       // Sprite
       { name: "Sprite 350ml", brand: "Sprite", category: "Soda", price: 50, image: images.sprite_350 },
       { name: "Sprite 500ml", brand: "Sprite", category: "Soda", price: 70, image: images.sprite_500 },
@@ -119,7 +119,7 @@ async function seed() {
       { name: "Sprite 1L", brand: "Sprite", category: "Soda", price: 130, image: images.sprite_1L },
       { name: "Sprite 2L", brand: "Sprite", category: "Soda", price: 220, image: images.sprite_2L },
 
-      // Fanta Blackcurrant
+      // Fanta Blackcurrent
       { name: "Fanta Blackcurrent Can", brand: "Fanta", category: "Soda", price: 80, image: images.fanta_black_can },
       { name: "Fanta Blackcurrent 350ml", brand: "Fanta", category: "Soda", price: 50, image: images.fanta_black_350 },
       { name: "Fanta Blackcurrent 500ml", brand: "Fanta", category: "Soda", price: 70, image: images.fanta_black_500 },
@@ -150,10 +150,10 @@ async function seed() {
       { name: "Coke 2L", brand: "Coke", category: "Soda", price: 220, image: images.coke_2L },
     ];
  
-    await mongoose.connection.db?.collection('products').insertMany(
-      products.map(p => ({ ...p, createdAt: new Date(), updatedAt: new Date() }))
+    const insertedProducts = await mongoose.connection.db?.collection('products').insertMany(
+      productData.map(p => ({ ...p, createdAt: new Date(), updatedAt: new Date() }))
     );
-    console.log(`✅ Seeded ${products.length} products`);
+    console.log(`Seeded ${productData.length} products`);
  
     const branches = [
       { name: "Nairobi HQ", location: "Nairobi", type: "headquarters" },
@@ -162,14 +162,40 @@ async function seed() {
       { name: "Nakuru Branch", location: "Nakuru", type: "branch" },
       { name: "Eldoret Branch", location: "Eldoret", type: "branch" },
     ];
+     
+    const branchIds = [];
     for (const b of branches) {
-      await mongoose.connection.db?.collection('branches').updateOne(
+      const result = await mongoose.connection.db?.collection('branches').findOneAndUpdate(
         { name: b.name },
         { $setOnInsert: { ...b, createdAt: new Date(), updatedAt: new Date() } },
-        { upsert: true }
+        { upsert: true, returnDocument: 'after' }  
       );
+       
     }
-    console.log("Branches seeded");
+    
+    const allBranches = await mongoose.connection.db?.collection('branches').find({}).toArray();
+    const allProducts = await mongoose.connection.db?.collection('products').find({}).toArray();
+
+    if (allBranches && allProducts) {
+      console.log(`Stocking inventory for ${allBranches.length} branches...`);
+      
+      const inventoryItems = [];
+      for (const branch of allBranches) {
+        for (const product of allProducts) {
+          inventoryItems.push({
+            branchId: branch._id,
+            productId: product._id,
+            quantity: 1000,  
+            updatedAt: new Date()
+          });
+        }
+      }
+      
+      if (inventoryItems.length > 0) {
+        await mongoose.connection.db?.collection('inventory').insertMany(inventoryItems);
+        console.log(`Inventory stocked (${inventoryItems.length} records created)`);
+      }
+    }
  
     const usersCollection = mongoose.connection.db?.collection('users');
     if (usersCollection) {
@@ -189,7 +215,7 @@ async function seed() {
       }
     }
 
-    console.log("Database refreshed with new products!");
+    console.log("Database ready! Inventory is fully stocked.");
     process.exit(0);
   } catch (error) {
     console.error("Error:", error);
