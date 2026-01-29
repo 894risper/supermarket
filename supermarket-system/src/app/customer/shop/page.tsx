@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { ShoppingCart, LogOut, Package, ImageOff } from 'lucide-react';
+import { ShoppingCart, LogOut, Package, ImageOff, Store, Filter, XCircle } from 'lucide-react';
 
 interface Product {
   _id: string;
@@ -40,6 +40,9 @@ export default function CustomerShop() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  
+   
+  const [activeFilter, setActiveFilter] = useState('All');
 
   useEffect(() => {
     if (!user || user.role !== 'customer') {
@@ -160,6 +163,20 @@ export default function CustomerShop() {
     await logout();
     router.push('/auth/login');
   };
+ 
+  const filteredProducts = activeFilter === 'All' 
+    ? products 
+    : products.filter(p => p.brand.toLowerCase().includes(activeFilter.toLowerCase()));
+ 
+  // HELPER: Extract size from name (e.g. "Coke 500ml" -> "500ml")
+  const getSizeBadge = (name: string) => {
+    if (name.toLowerCase().includes('can')) return 'Can';
+    if (name.toLowerCase().includes('2l')) return '2 Litres';
+    if (name.toLowerCase().includes('1l')) return '1 Litre';
+    if (name.toLowerCase().includes('500')) return '500ml';
+    if (name.toLowerCase().includes('350')) return '350ml';
+    return 'Standard';
+  };
 
   if (isLoadingData) {
     return (
@@ -174,37 +191,52 @@ export default function CustomerShop() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
+      
+      {/* 1. PROFESSIONAL HEADER */}
       <nav className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Supermarket Chain</h1>
-              <p className="text-sm text-gray-500">Welcome, {user?.name}</p>
+            
+            {/* Logo Section */}
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-2 rounded-lg text-white">
+                <Store size={24} />
+              </div>
+              <div className="leading-tight">
+                <h1 className="text-xl font-bold text-gray-900 tracking-tight">SuperMart</h1>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Fast & Fresh</p>
+              </div>
             </div>
+
+            {/* Actions Section */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/customer/orders')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="hidden sm:flex items-center gap-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all font-medium"
               >
                 <Package size={20} />
-                <span className="hidden sm:inline">My Orders</span>
+                <span>My Orders</span>
               </button>
+              
               <button
                 onClick={() => setShowCart(!showCart)}
-                className="relative flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="relative flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-all shadow-md hover:shadow-lg"
               >
                 <ShoppingCart size={20} />
-                <span>Cart ({getTotalItems()})</span>
+                <span className="font-medium">Cart</span>
                 {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold border-2 border-white">
                     {getTotalItems()}
                   </span>
                 )}
               </button>
+              
+              <div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-gray-400 hover:text-red-600 transition-colors"
+                title="Logout"
               >
                 <LogOut size={20} />
               </button>
@@ -214,208 +246,213 @@ export default function CustomerShop() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Branch Selection */}
-        {branches.length > 0 ? (
-          <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Branch for Pickup
-            </label>
-            <select
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              {branches.map((branch) => (
-                <option key={branch._id} value={branch._id}>
-                  {branch.name} - {branch.location}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div className="mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <p className="text-yellow-800">
-              No branches available yet. Please contact the administrator.
-            </p>
-          </div>
-        )}
+        
+        {/* 2. CONTROL BAR (Branch Selection + Filters) */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+           
+           {/* Branch Selector */}
+           {branches.length > 0 ? (
+             <div className="flex items-center gap-3 w-full md:w-auto">
+               <div className="bg-blue-50 p-2.5 rounded-full text-blue-600 shrink-0">
+                 <Store size={20}/>
+               </div>
+               <div className="flex-1">
+                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-0.5">Pickup Branch</label>
+                 <select 
+                   value={selectedBranch} 
+                   onChange={(e) => setSelectedBranch(e.target.value)} 
+                   className="bg-transparent font-bold text-gray-900 text-sm focus:outline-none cursor-pointer w-full md:w-48 hover:text-blue-600 transition-colors"
+                 >
+                   {branches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
+                 </select>
+               </div>
+             </div>
+           ) : (
+             <div className="text-yellow-600 text-sm font-medium">No branches available</div>
+           )}
+           
+           {/* FILTER TABS */}
+           <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 w-full md:w-auto no-scrollbar">
+             {['All', 'Coke', 'Fanta', 'Sprite'].map(brand => (
+               <button 
+                 key={brand}
+                 onClick={() => setActiveFilter(brand)}
+                 className={`px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                   activeFilter === brand 
+                     ? 'bg-gray-900 text-white shadow-lg scale-105' 
+                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                 }`}
+               >
+                 {brand === 'All' && <Filter size={14} />}
+                 {brand}
+               </button>
+             ))}
+           </div>
+        </div>
 
-        {/* Products Grid */}
-        {products.length > 0 ? (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <div key={product._id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-                  <div className="text-center mb-4">
-                    {/* ENHANCED IMAGE SIZE: w-full h-64 (approx 250px tall) */}
-                    <div className="w-full h-64 mx-auto bg-white rounded-lg flex items-center justify-center mb-4 overflow-hidden relative">
-                      {product.image ? (
-                        <img 
-                          src={product.image} 
-                          alt={product.name}
-                          className="w-full h-full object-contain hover:scale-105 transition-transform"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      
-                      {/* Fallback Icon */}
-                      <div className={`flex items-center justify-center w-full h-full ${product.image ? 'hidden' : ''}`}>
-                         <span className="text-5xl">
-                          {product.brand === 'Coca-Cola' || product.brand === 'Coke' ? '🥤' : 
-                           product.brand === 'Fanta' ? '🍊' : 
-                           product.brand === 'Sprite' ? '✨' : 
-                           product.category === 'Energy Drink' ? '⚡' : '🥤'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="font-semibold text-lg text-gray-900">{product.name}</h3>
-                    <p className="text-gray-600">{product.brand}</p>
-                    <p className="text-2xl font-bold text-blue-600 mt-2">
-                      KES {product.price.toLocaleString()}
-                    </p>
+        {/* 3. PRODUCT GRID */}
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <div key={product._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-4 flex flex-col border border-gray-100 group">
+                
+                {/* Image Area */}
+                <div className="relative w-full h-64 mb-4 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                  {product.image ? (
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  {/* Fallback */}
+                  <div className={`flex items-center justify-center w-full h-full bg-gray-50 text-gray-300 ${product.image ? 'hidden' : ''}`}>
+                     <ImageOff size={48} />
                   </div>
-                  <button
-                    onClick={() => addToCart(product)}
-                    disabled={!selectedBranch}
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  >
-                    {selectedBranch ? 'Add to Cart' : 'Select Branch First'}
-                  </button>
                 </div>
-              ))}
-            </div>
+
+                {/* Details Area */}
+                <div className="mt-auto">
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <div>
+                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-0.5">{product.brand}</p>
+                      <h3 className="font-bold text-gray-900 leading-tight text-lg">{product.name}</h3>
+                    </div>
+                    {/* Size Badge */}
+                    <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide shrink-0">
+                      {getSizeBadge(product.name)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-xl font-extrabold text-gray-900">KES {product.price}</span>
+                    <button
+                      onClick={() => addToCart(product)}
+                      disabled={!selectedBranch}
+                      className="bg-gray-900 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-gray-200 active:scale-95"
+                    >
+                      <ShoppingCart size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
-            <p className="text-yellow-800 text-lg">
-              No products available yet. Please check back later.
-            </p>
+          <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
+            <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+              <Filter size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">No drinks found</h3>
+            <p className="text-gray-500">Try selecting a different brand filter.</p>
           </div>
         )}
       </div>
 
-      {/* Cart Sidebar */}
+      {/* 4. CART SIDEBAR */}
       {showCart && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowCart(false)}>
+        <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm transition-opacity" onClick={() => setShowCart(false)}>
           <div 
-            className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl overflow-y-auto"
+            className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl overflow-y-auto transform transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Shopping Cart</h2>
-                <button
-                  onClick={() => setShowCart(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ✕
+                <h2 className="text-2xl font-bold tracking-tight">Your Cart</h2>
+                <button onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                  <XCircle size={24} />
                 </button>
               </div>
 
               {cart.length === 0 ? (
                 <div className="text-center py-12">
-                  <ShoppingCart className="mx-auto text-gray-300" size={64} />
-                  <p className="text-gray-500 mt-4">Your cart is empty</p>
-                  <button
-                    onClick={() => setShowCart(false)}
-                    className="mt-4 text-blue-600 hover:text-blue-700"
-                  >
-                    Continue Shopping
-                  </button>
+                   <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                     <ShoppingCart size={32}/>
+                   </div>
+                   <p className="text-gray-500 font-medium">Your cart is empty</p>
+                   <button onClick={() => setShowCart(false)} className="mt-4 text-blue-600 hover:text-blue-700 font-semibold text-sm">
+                     Start Shopping
+                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="space-y-4 mb-6">
+                  <div className="space-y-4 mb-8">
                     {cart.map((item) => (
-                      <div key={item.product._id} className="flex justify-between items-center border-b pb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            {/* ENHANCED CART THUMBNAIL: w-20 h-20 */}
-                            {item.product.image ? (
-                              <img src={item.product.image} alt="" className="w-20 h-20 object-contain rounded bg-white border border-gray-100" />
-                            ) : (
-                              <span className="text-2xl">
-                                {item.product.brand === 'Coca-Cola' || item.product.brand === 'Coke' ? '🥤' : '✨'}
-                              </span>
-                            )}
-                            <div>
-                              <h3 className="font-semibold">{item.product.name}</h3>
-                              <p className="text-sm text-gray-600">KES {item.product.price} each</p>
-                            </div>
-                          </div>
+                      <div key={item.product._id} className="flex gap-4 border-b border-gray-100 pb-4">
+                        {/* Cart Item Image */}
+                        <div className="w-16 h-16 bg-white border border-gray-100 rounded-lg flex items-center justify-center p-1 shrink-0">
+                          {item.product.image ? (
+                            <img src={item.product.image} className="w-full h-full object-contain" />
+                          ) : (
+                            <Package size={24} className="text-gray-300"/>
+                          )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => updateQuantity(item.product._id, -1)}
-                            className="w-8 h-8 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center font-bold"
-                          >
-                            −
-                          </button>
-                          <span className="font-semibold w-8 text-center">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.product._id, 1)}
-                            className="w-8 h-8 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center font-bold"
-                          >
-                            +
-                          </button>
-                          <button
-                            onClick={() => removeFromCart(item.product._id)}
-                            className="ml-2 text-red-600 hover:text-red-700"
-                          >
-                            🗑️
-                          </button>
+                        
+                        {/* Cart Item Details */}
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900 line-clamp-1">{item.product.name}</h4>
+                          <p className="text-xs text-gray-500 mb-2 font-medium">KES {item.product.price}</p>
+                          
+                          <div className="flex items-center gap-3">
+                             <button 
+                               onClick={() => updateQuantity(item.product._id, -1)} 
+                               className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold transition-colors"
+                             >-</button>
+                             <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                             <button 
+                               onClick={() => updateQuantity(item.product._id, 1)} 
+                               className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold transition-colors"
+                             >+</button>
+                             
+                             <button 
+                               onClick={() => removeFromCart(item.product._id)} 
+                               className="ml-auto text-xs text-red-500 font-medium hover:text-red-600 hover:underline"
+                             >
+                               Remove
+                             </button>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  <div className="border-t pt-4 mb-6">
-                    <div className="flex justify-between text-lg font-bold mb-2">
-                      <span>Subtotal ({getTotalItems()} items):</span>
-                      <span>KES {getTotalAmount().toLocaleString()}</span>
+                  
+                  <div className="space-y-4 border-t border-gray-100 pt-6">
+                    <div className="flex justify-between items-end">
+                      <span className="text-sm text-gray-500 font-medium">Total Amount</span>
+                      <span className="text-2xl font-extrabold text-gray-900">KES {getTotalAmount().toLocaleString()}</span>
                     </div>
-                    <p className="text-sm text-gray-600">Pickup from: {branches.find(b => b._id === selectedBranch)?.name}</p>
-                  </div>
+                    
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">M-Pesa Phone Number</label>
+                      <input 
+                        type="tel" 
+                        value={phoneNumber} 
+                        onChange={(e) => setPhoneNumber(e.target.value)} 
+                        placeholder="254712345678" 
+                        className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium" 
+                      />
+                    </div>
 
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      M-Pesa Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="254700000000"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enter your Safaricom number (format: 254XXXXXXXXX)
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={handleCheckout}
-                    disabled={loading || !phoneNumber || !selectedBranch}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Processing...
-                      </span>
-                    ) : (
-                      `Pay KES ${getTotalAmount().toLocaleString()} with M-Pesa`
-                    )}
-                  </button>
-
-                  <p className="text-xs text-center text-gray-500 mt-3">
+                    <button 
+                      onClick={handleCheckout} 
+                      disabled={loading} 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-green-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Processing...</span>
+                        </>
+                      ) : 'Pay with M-Pesa'}
+                    </button>
+                    <p className="text-xs text-center text-gray-500 mt-3">
                     You will receive an STK push on your phone to complete payment
                   </p>
+                  </div>
                 </>
               )}
             </div>
