@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Supermarket Chain Management System',
-  description: 'Distributed web application for supermarket chain management',
+  description: 'Order your favorite drinks instantly.',
 };
 
 export default function RootLayout({
