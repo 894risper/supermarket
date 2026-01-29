@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     const productData: IProduct = {
       name: sanitized.name!,
       brand: sanitized.brand!,
+      category: sanitized.category || 'General',
       price: sanitized.price!,
       image: sanitized.image || '',
       createdAt: new Date(),
@@ -114,7 +115,7 @@ export async function PUT(request: NextRequest) {
 
     // Sanitize and validate update data
     const sanitized = ProductModel.sanitize(updateData);
-    const validation = ProductModel.validate({ ...sanitized, name: sanitized.name || 'temp', brand: sanitized.brand || 'Coke', price: sanitized.price || 1 });
+    const validation = ProductModel.validate(sanitized);
     
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
@@ -125,6 +126,7 @@ export async function PUT(request: NextRequest) {
     const updateFields: any = {};
     if (sanitized.name) updateFields.name = sanitized.name;
     if (sanitized.brand) updateFields.brand = sanitized.brand;
+    if (sanitized.category) updateFields.category = sanitized.category;
     if (sanitized.price !== undefined) updateFields.price = sanitized.price;
     if (sanitized.image !== undefined) updateFields.image = sanitized.image;
     updateFields.updatedAt = new Date();

@@ -21,9 +21,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const userData = await login(email, password);
       toast.success('Login successful! 🎉');
-      router.push('/');
+      
+      // Redirect based on user role
+      if (userData?.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/customer/shop');
+      }
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || error.message || 'Login failed';
       toast.error(errorMessage);

@@ -7,7 +7,7 @@ import axios from 'axios';
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser | null>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const response = await axios.post('/api/auth/login', { email, password });
     setUser(response.data.user);
+    return response.data.user; // Return user data for redirect logic
   };
 
   const register = async (name: string, email: string, password: string, phone?: string) => {
