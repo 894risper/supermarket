@@ -11,7 +11,7 @@ import { LogIn, Mail, Lock, ShoppingBag, Eye, EyeOff } from 'lucide-react';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // NEW STATE
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
@@ -24,12 +24,22 @@ export default function LoginPage() {
       const userData = await login(email, password);
       toast.success('Login successful! 🎉');
       
+
       // Redirect based on user role
       if (userData?.role === 'admin') {
+
+      // FIX: Smart Redirect based on email/role
+      // If it looks like an admin, send to dashboard. Otherwise, go to shop.
+      if (email.toLowerCase().includes('admin')) {
+
         router.push('/admin/dashboard');
       } else {
         router.push('/customer/shop');
       }
+
+
+      
+
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || error.message || 'Login failed';
       toast.error(errorMessage);
@@ -93,14 +103,13 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   id="password"
-                  type={showPassword ? "text" : "password"}  
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-900 placeholder-gray-400 bg-white"
                   placeholder="••••••••"
                 />
-                {/* TOGGLE BUTTON */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
