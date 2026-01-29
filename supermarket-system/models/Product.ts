@@ -1,11 +1,10 @@
 import { ObjectId } from 'mongodb';
 
-export type BrandType = 'Coke' | 'Fanta' | 'Sprite';
-
 export interface IProduct {
   _id?: ObjectId;
   name: string;
-  brand: BrandType;
+  brand: string;       
+  category: string;   
   price: number;
   image?: string;
   createdAt: Date;
@@ -14,18 +13,23 @@ export interface IProduct {
 
 export class ProductModel {
   static collectionName = 'products';
-  static validBrands: BrandType[] = ['Coke', 'Fanta', 'Sprite'];
+ 
+  static commonBrands = [
+    'Coca-Cola', 
+    'PepsiCo', 
+    'Red Bull', 
+    'Monster', 
+    'EABL', 
+    'Crown Beverages'
+  ];
 
   static validate(product: Partial<IProduct>): { valid: boolean; error?: string } {
     if (!product.name || product.name.trim().length < 3) {
       return { valid: false, error: 'Product name must be at least 3 characters' };
     }
-
-    if (!product.brand || !this.validBrands.includes(product.brand)) {
-      return { 
-        valid: false, 
-        error: `Brand must be one of: ${this.validBrands.join(', ')}` 
-      };
+ 
+    if (!product.brand || product.brand.trim().length < 2) {
+      return { valid: false, error: 'Brand is required' };
     }
 
     if (!product.price || product.price <= 0) {
@@ -43,7 +47,9 @@ export class ProductModel {
     return {
       ...product,
       name: product.name?.trim(),
-      price: product.price ? Number(product.price) : undefined,
+      brand: product.brand?.trim(),
+      category: product.category?.trim() || 'General',
+      price: product.price ? Number(product.price) : 0,
       image: product.image?.trim() || '',
     };
   }
