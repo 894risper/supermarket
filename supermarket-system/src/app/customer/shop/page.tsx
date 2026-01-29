@@ -40,7 +40,7 @@ export default function CustomerShop() {
   const [loading, setLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-   
+  // NEW: Filter state for "Coke", "Fanta", "Sprite"
   const [activeFilter, setActiveFilter] = useState('All');
 
   useEffect(() => {
@@ -48,7 +48,8 @@ export default function CustomerShop() {
       router.push('/auth/login');
       return;
     }
-    fetchData(); 
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
   const fetchData = async () => {
@@ -162,12 +163,13 @@ export default function CustomerShop() {
     await logout();
     router.push('/auth/login');
   };
- 
+
+  // FILTER LOGIC
   const filteredProducts = activeFilter === 'All' 
     ? products 
     : products.filter(p => p.brand.toLowerCase().includes(activeFilter.toLowerCase()));
- 
-  // HELPER: Extract size from name (e.g. "Coke 500ml" -> "500ml")
+
+  // HELPER: Extract size from name
   const getSizeBadge = (name: string) => {
     if (name.toLowerCase().includes('can')) return 'Can';
     if (name.toLowerCase().includes('2l')) return '2 Litres';
@@ -196,7 +198,6 @@ export default function CustomerShop() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
-            {/* Logo Section */}
             <div className="flex items-center gap-2">
               <div className="bg-blue-600 p-2 rounded-lg text-white">
                 <Store size={24} />
@@ -207,7 +208,6 @@ export default function CustomerShop() {
               </div>
             </div>
 
-            {/* Actions Section */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/customer/orders')}
@@ -246,7 +246,7 @@ export default function CustomerShop() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* 2. CONTROL BAR (Branch Selection + Filters) */}
+        {/* 2. CONTROL BAR */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
            
            {/* Branch Selector */}
@@ -361,7 +361,7 @@ export default function CustomerShop() {
           >
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">Your Cart</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-gray-900">Your Cart</h2>
                 <button onClick={() => setShowCart(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
                   <XCircle size={24} />
                 </button>
@@ -399,12 +399,12 @@ export default function CustomerShop() {
                           <div className="flex items-center gap-3">
                              <button 
                                onClick={() => updateQuantity(item.product._id, -1)} 
-                               className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold transition-colors"
+                               className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold transition-colors text-gray-700"
                              >-</button>
-                             <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                             <span className="text-sm font-bold w-4 text-center text-gray-900">{item.quantity}</span>
                              <button 
                                onClick={() => updateQuantity(item.product._id, 1)} 
-                               className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold transition-colors"
+                               className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-sm font-bold transition-colors text-gray-700"
                              >+</button>
                              
                              <button 
@@ -432,7 +432,7 @@ export default function CustomerShop() {
                         value={phoneNumber} 
                         onChange={(e) => setPhoneNumber(e.target.value)} 
                         placeholder="254712345678" 
-                        className="w-full p-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium" 
+                        className="w-full p-3.5 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium text-gray-900 placeholder-gray-400" 
                       />
                     </div>
 
