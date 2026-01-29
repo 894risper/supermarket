@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import toast from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import { ShoppingCart, LogOut, Package, ImageOff } from 'lucide-react';
- 
+
 interface Product {
   _id: string;
   name: string;
   brand: string;
-  category: string; 
+  category: string;
   price: number;
-  image?: string;   
+  image?: string;
 }
 
 interface Branch {
@@ -247,22 +247,21 @@ export default function CustomerShop() {
               {products.map((product) => (
                 <div key={product._id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="text-center mb-4">
-                    {/* CHANGE 3: Logic to show real image if available, else fallback to emoji */}
-                    <div className="w-32 h-32 mx-auto bg-gray-50 rounded-lg flex items-center justify-center mb-4 overflow-hidden relative">
+                    {/* ENHANCED IMAGE SIZE: w-full h-64 (approx 250px tall) */}
+                    <div className="w-full h-64 mx-auto bg-white rounded-lg flex items-center justify-center mb-4 overflow-hidden relative">
                       {product.image ? (
                         <img 
                           src={product.image} 
                           alt={product.name}
                           className="w-full h-full object-contain hover:scale-105 transition-transform"
                           onError={(e) => {
-                            // If image fails to load, hide it and show fallback
                             e.currentTarget.style.display = 'none';
                             e.currentTarget.nextElementSibling?.classList.remove('hidden');
                           }}
                         />
                       ) : null}
                       
-                      {/* Fallback Emoji/Icon (Shown if no image or image fails) */}
+                      {/* Fallback Icon */}
                       <div className={`flex items-center justify-center w-full h-full ${product.image ? 'hidden' : ''}`}>
                          <span className="text-5xl">
                           {product.brand === 'Coca-Cola' || product.brand === 'Coke' ? '🥤' : 
@@ -335,9 +334,9 @@ export default function CustomerShop() {
                       <div key={item.product._id} className="flex justify-between items-center border-b pb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                             {/* CHANGE 4: Small thumbnail in cart */}
+                            {/* ENHANCED CART THUMBNAIL: w-20 h-20 */}
                             {item.product.image ? (
-                              <img src={item.product.image} alt="" className="w-10 h-10 object-contain rounded bg-gray-50" />
+                              <img src={item.product.image} alt="" className="w-20 h-20 object-contain rounded bg-white border border-gray-100" />
                             ) : (
                               <span className="text-2xl">
                                 {item.product.brand === 'Coca-Cola' || item.product.brand === 'Coke' ? '🥤' : '✨'}
