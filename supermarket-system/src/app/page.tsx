@@ -51,9 +51,9 @@ export default function Home() {
     { name: 'Nakuru', location: 'Gilani\'s', status: 'Open' },
     { name: 'Eldoret', location: 'Zion Mall', status: 'Open' },
   ];
- 
+
   const BRANDS = [
-    { 
+     { 
       name: 'Coca-Cola', 
       url: 'https://logos-world.net/wp-content/uploads/2020/03/Coca-Cola-Logo.png',
       width: 'w-32'
@@ -71,9 +71,10 @@ export default function Home() {
   ];
 
   return (
-    <div className="font-sans text-gray-900">
-       
-      <div className="relative h-screen w-full overflow-hidden text-white"> 
+    <div className="font-sans text-gray-900 scroll-smooth">
+      
+      {/* SECTION 1: HERO */}
+      <div className="relative h-screen w-full overflow-hidden text-white">
         <div className="absolute inset-0 z-0">
           <video
             autoPlay
@@ -89,18 +90,15 @@ export default function Home() {
               src="/home.mp4" 
               type="video/mp4" 
             />
-            {/* Fallback Image */}
             <img 
               src="https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg" 
               alt="Cheers" 
               className="h-full w-full object-cover"
             />
           </video>
-          {/* Overlay */}
           <div className="absolute inset-0 bg-black/60 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
         </div>
 
-        {/* Transparent Header */}
         <header className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-6 md:px-12">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg border border-white/20">
@@ -119,7 +117,6 @@ export default function Home() {
           </Link>
         </header>
 
-        {/* Hero Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
           <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md">
             <span className="relative flex h-2 w-2">
@@ -156,30 +153,31 @@ export default function Home() {
             </Link>
           </div>
         </div>
- 
+
         <div className="absolute bottom-0 w-full border-t border-white/10 bg-black/30 backdrop-blur-md py-6 overflow-hidden z-20">
           <div className="flex justify-center items-center gap-12 md:gap-24 opacity-80">
             {BRANDS.map((brand) => (
               <div 
                 key={brand.name}
                 className="group relative flex flex-col items-center justify-center gap-2 transition-all duration-300 hover:scale-110 cursor-default"
-              > 
+              >
                 <img 
                   src={brand.url} 
                   alt={brand.name} 
                   className={`${brand.width} h-auto object-contain filter grayscale brightness-200 contrast-125 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-500 drop-shadow-lg`}
-                  onError={(e) => { 
+                  onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
-                /> 
+                />
                 <span className="hidden text-white font-bold tracking-widest text-lg">{brand.name.toUpperCase()}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
- 
+
+      {/* SECTION 2: FEATURES */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -207,7 +205,8 @@ export default function Home() {
           </div>
         </div>
       </section>
- 
+
+      {/* SECTION 3: BRANCHES */}
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -244,8 +243,9 @@ export default function Home() {
           </div>
         </div>
       </section>
- 
-      <footer className="bg-gray-900 text-white py-12 px-4 border-t border-gray-800">
+
+      {/* SECTION 4: FOOTER */} 
+      <footer id="contact" className="bg-gray-900 text-white py-12 px-4 border-t border-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
@@ -262,7 +262,7 @@ export default function Home() {
 
             <div>
               <h3 className="font-bold mb-4 text-lg">Quick Links</h3>
-              <div className="space-y-2">
+              <div className="space-y-2"> 
                 <Link href="/customer/shop" className="block text-gray-400 hover:text-white transition-colors">Products</Link>
                 <Link href="/auth/login" className="block text-gray-400 hover:text-white transition-colors">Login</Link>
                 <Link href="/auth/register" className="block text-gray-400 hover:text-white transition-colors">Register</Link>
@@ -271,17 +271,17 @@ export default function Home() {
 
             <div>
               <h3 className="font-bold mb-4 text-lg">Support</h3>
-              <div className="space-y-2">
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Contact Us</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">FAQ</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Terms of Service</a>
+              <div className="space-y-2"> 
+                <a href="#contact" className="block text-gray-400 hover:text-white transition-colors">Contact Us</a> 
+                <Link href="/legal" className="block text-gray-400 hover:text-white transition-colors">FAQ</Link>
+                <Link href="/legal" className="block text-gray-400 hover:text-white transition-colors">Terms of Service</Link>
               </div>
             </div>
 
             <div>
               <h3 className="font-bold mb-4 text-lg">Contact</h3>
               <div className="space-y-2 text-gray-400">
-                <p>📞 +254 700 123 456</p>
+                <p>📞 +254 791 894 370</p>
                 <p>✉️ info@supermart.co.ke</p>
                 <p>📍 Westlands, Nairobi</p>
               </div>
