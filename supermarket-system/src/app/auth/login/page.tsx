@@ -1,4 +1,3 @@
-// login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -21,25 +20,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const userData = await login(email, password);
+      await login(email, password);
       toast.success('Login successful! 🎉');
-      
-
-      // Redirect based on user role
-      if (userData?.role === 'admin') {
-
-      // FIX: Smart Redirect based on email/role
-      // If it looks like an admin, send to dashboard. Otherwise, go to shop.
+       
       if (email.toLowerCase().includes('admin')) {
-
         router.push('/admin/dashboard');
       } else {
         router.push('/customer/shop');
       }
-
-
       
-
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || error.message || 'Login failed';
       toast.error(errorMessage);
